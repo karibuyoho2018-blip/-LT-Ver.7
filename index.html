@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#0b0b0d">
+  <title>Pバイオハザード RE:2 LTver. シミュレーター</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+    <header class="titlebar">
+      <div>
+        <div class="eyebrow">PACHINKO SIMULATOR / v0.7</div>
+        <h1>Pバイオハザード RE:2 <span>LTver.</span></h1>
+      </div>
+      <button id="reset-btn" class="btn btn-ghost">リセット</button>
+    </header>
+
+    <section class="status-grid">
+      <article class="panel hero-panel">
+        <div class="mode-row">
+          <div>
+            <div class="label">現在の状態</div>
+            <div id="mode" class="mode">通常時</div>
+          </div>
+          <div class="remaining-box">
+            <span id="remaining-label" class="label">残り</span>
+            <strong id="remaining">－</strong>
+          </div>
+        </div>
+        <div id="phase" class="phase">図柄揃い 1/199.8</div>
+        <div id="spin-badge" class="spin-badge">現在 0回転</div>
+
+        <div id="machine-stage" class="machine-stage stage-idle" aria-live="polite">
+          <div id="stage-kicker" class="stage-kicker">BIOHAZARD RE:2</div>
+          <div id="stage-main" class="stage-main">STANDBY</div>
+          <div id="stage-sub" class="stage-sub">1,000円分 / 10,000円分で開始</div>
+          <div id="stage-route" class="stage-route" hidden>
+            <div id="route-title" class="route-title"></div>
+            <div id="route-meta" class="route-meta"></div>
+            <div id="route-expect" class="route-expect"></div>
+          </div>
+          <div id="hold-dots" class="hold-dots" aria-label="残保留"></div>
+          <div class="stage-bar"><i id="stage-bar-fill"></i></div>
+          <div id="stage-flash" class="stage-flash"></div>
+        </div>
+
+        <div id="result-message" class="result-message">1,000円分 / 10,000円分で通常時を消化</div>
+      </article>
+
+      <article class="panel money-panel">
+        <div class="money-item"><span>持ち球</span><strong id="balls">0</strong><small>球</small></div>
+        <div class="money-item"><span>投資</span><strong id="investment">0</strong><small>円</small></div>
+        <div class="money-item emphasis"><span>収支</span><strong id="balance">0</strong><small>円</small></div>
+      </article>
+    </section>
+
+    <section class="panel controls-panel">
+      <div class="controls-main">
+        <button id="auto-1000" class="btn btn-primary">1,000円分</button>
+        <button id="auto-10000" class="btn btn-primary">10,000円分</button>
+        <button id="result-check" class="btn btn-result" type="button" hidden>当落結果を見る</button>
+        <button id="right-1" class="btn btn-accent" type="button" hidden>右打ち 1回転</button>
+        <button id="right-10" class="btn btn-accent" type="button" hidden>右打ち 10回転</button>
+        <button id="hold-spin" class="btn btn-accent" type="button" hidden>残保留を1個抽選</button>
+        <button id="rush-skip" class="btn btn-accent" type="button" hidden>RUSHを当たり/終了まで</button>
+      </div>
+      <div class="settings">
+        <label>貸玉 <select id="rate"><option value="4">4円</option><option value="1">1円</option></select></label>
+        <label>千円スタート <input id="spins-per-1k" type="number" min="1" max="40" step="0.1" value="18.0"> 回</label>
+        <label class="toggle"><input id="re-custom" type="checkbox" checked><span>RE:カスタム（先バレ）</span></label>
+      </div>
+      <div class="audio-settings" aria-label="サウンド設定">
+        <div class="audio-heading">
+          <div><strong>SOUND</strong><span>内蔵音源 / 音量設定</span></div>
+          <button id="audio-mute" class="btn btn-small btn-ghost" type="button">ミュート</button>
+        </div>
+        <div class="audio-row audio-master">
+          <label for="volume-master">マスター</label>
+          <input id="volume-master" type="range" min="0" max="100" step="1" value="70">
+          <output id="volume-master-value" for="volume-master">70%</output>
+        </div>
+        <div class="audio-row">
+          <label for="volume-re">先バレ</label>
+          <input id="volume-re" type="range" min="0" max="100" step="1" value="100">
+          <output id="volume-re-value" for="volume-re">100%</output>
+          <button class="btn btn-small audio-preview" type="button" data-sound="re">試聴</button>
+        </div>
+        <div class="audio-row">
+          <label for="volume-tyrant">タイラント</label>
+          <input id="volume-tyrant" type="range" min="0" max="100" step="1" value="100">
+          <output id="volume-tyrant-value" for="volume-tyrant">100%</output>
+          <button class="btn btn-small audio-preview" type="button" data-sound="tyrant">試聴</button>
+        </div>
+        <div class="audio-row">
+          <label for="volume-jackpot">大当たり</label>
+          <input id="volume-jackpot" type="range" min="0" max="100" step="1" value="100">
+          <output id="volume-jackpot-value" for="volume-jackpot">100%</output>
+          <button class="btn btn-small audio-preview" type="button" data-sound="jackpot">試聴</button>
+        </div>
+        <p class="audio-note">大当たり音は「通常時の先バレ大当たり」と「SURVIVAL CHANCEでタイラント出現 → 大当たり」で自動再生。</p>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="panel stat"><span>通常回転</span><strong id="normal-spins">0</strong><small>回</small></article>
+      <article class="panel stat"><span>初当たり</span><strong id="first-hits">0</strong><small id="first-prob">1/―</small></article>
+      <article class="panel stat"><span>RUSH突入</span><strong id="rush-entries">0</strong><small id="rush-entry-rate">0%</small></article>
+      <article class="panel stat lt"><span>LT突入</span><strong id="lt-entries">0</strong><small>回</small></article>
+      <article class="panel stat"><span>右打ち大当たり</span><strong id="right-hits">0</strong><small id="right-prob">1/―</small></article>
+      <article class="panel stat"><span>ST回転 / 残保留抽選</span><strong id="right-spins">0</strong><small id="hold-spins">0個</small></article>
+    </section>
+
+    <section class="panel spec-panel">
+      <details>
+        <summary>スペック / 実装ルール</summary>
+        <div class="spec-body">
+          <p>通常時 1/199.8 ／ 右打ち中 1/45.8</p>
+          <p>特図1：1% 10R→PREMIUM、50% 2R→HAZARD RUSH、49% 2R→通常</p>
+          <p>HAZARD RUSH：ST53回＋残保留4個。大当たり時 33% SURVIVAL / 67% HAZARD継続</p>
+          <p>SURVIVAL：ST53回。ST1～52回目の大当たりでXTREMEへ。53回転を抜けた後の残保留4個はHAZARD RUSH演出へ切替</p>
+          <p>XTREME：ST87回＋残保留4個。ST1～86回目の大当たりでXTREME継続</p>
+          <p>PREMIUM：実質次回まで。次回大当たり後XTREME</p>
+          <p>ST最終変動＋残保留4個の当たりはHAZARD RUSHと同じ33%/67%振分け。</p>
+          <p>残保留はST回数に含めず、「残保留抽選」として4個を個別表示。SURVIVAL CHANCEを駆け抜けた場合、残保留4個はHAZARD RUSH演出として処理します。</p>
+          <p>RE:カスタム：発生率は約1/100、期待度約50%。通常時の大当たりはすべて先バレを経由。先バレ発生回転数を表示し、「発展先を見る」→リーチ表示→「当落結果を見る」の2段階で決着します。</p>
+          <p>保留連表示：10R後の最初の4抽選以内に再度10Rを引いた場合、「3000 BONUS（1500×2）」として演出表示。出玉の二重加算はしません。</p>
+          <p>サウンド：先バレ音／タイラント出現音／大当たり音を内蔵。先バレ音とRE:画面は再生開始タイミングを同期。通常時の先バレ大当たりでも大当たり音を再生します。マスター＋個別音量を設定可能。</p>
+          <p>操作：通常時は1,000円分／10,000円分。先バレ発生で自動停止。「発展先を見る」を押してリーチ先を表示し、その後「当落結果を見る」で決着。ボタンは先バレ音の再生終了を待たずに操作できます。RE:カスタムON中の通常時大当たりはすべて先バレを経由します。</p>
+          <p>右打ち：1回転／10回転単位で消化可能。大当たり・ST終了・SURVIVAL中のタイラント出現で途中停止。タイラントは展開先と期待度を先に表示し、「当落結果を見る」で決着。残保留4個は1個ずつ抽選します。</p>
+          <p>先バレ発展：ゾンビ群★3=30%、リッカー★3=30%、アリゲーター★3.5=50%、G STAGE 2★3.5=50%、G STAGE 3★4=70%。全回転は1%のPREMIUM直行時のみ。</p>
+          <p>タイラント展開：通常30%、EAST PASSAGE 40%、SHOWER ROOM 50%、CHIEF’S OFFICE 60%。各ルートの表示期待度が実当たり率になるよう条件付き抽選。</p>
+          <p>画面テーマ：通常=黒、HAZARD=青、SURVIVAL=緑、XTREME=赤、PREMIUM=金。スマホでは操作ボタン・音量設定をタッチ向けに最適化。</p>
+          <p class="note">※大当たり音はSURVIVAL CHANCEのタイラント当たりに加え、通常時の先バレ大当たりでも再生します。通常時の全当たりを先バレ経由にしつつ期待度50%とするため、先バレ発生率は理論上約1/100になります。</p>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel log-panel">
+      <div class="section-title">履歴</div>
+      <div id="log" class="log"></div>
+    </section>
+  </main>
+
+  <div id="mode-entry" class="mode-entry" aria-hidden="true">
+    <div class="mode-entry-inner">
+      <div id="entry-kicker" class="entry-kicker">RUSH</div>
+      <div id="entry-main" class="entry-main">HAZARD RUSH</div>
+      <div id="entry-sub" class="entry-sub">突入！</div>
+    </div>
+  </div>
+
+  <script src="logic.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
